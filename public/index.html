@@ -5,20 +5,23 @@
   <title>YTB Random - Regarde une vidéo YouTube aléatoire</title>
   <meta name="description" content="Clique et découvre une vidéo YouTube totalement aléatoire, sans savoir ce qui t'attend. C'est rapide, fun, et sans pub.">
 
-   <!-- Meta SEO -->
+  <!-- Meta SEO -->
   <meta property="og:title" content="YTB Random - Vidéo aléatoire" />
   <meta property="og:description" content="Découvre une vidéo YouTube aléatoire à chaque clic. Simple. Rapide. Fun." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://ytbrandom.shop/">
   <link rel="icon" type="image/png" href="favicon.png">
 
-
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4993744918084781"
+     crossorigin="anonymous"></script>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
   <style>
     body { font-family: 'Inter', sans-serif; }
     .btn-3d { transition: all 0.15s ease-out; box-shadow: 0 5px 0 0 #c72b2b; }
@@ -52,9 +55,14 @@
   <div class="flex flex-col lg:flex-row flex-grow" style="min-height: calc(100vh - 60px);">
     <aside class="w-full lg:w-64 bg-gray-800 p-4 border-r border-gray-700 hidden lg:flex lg:flex-col">
       <h2 class="text-lg font-bold mb-4" data-key="adTitle">Publicité</h2>
-      <div class="flex-grow bg-gray-700 rounded-lg flex items-center justify-center">
-        <span class="text-gray-500">Espace Pub 1</span>
-      </div>
+      <!-- Bloc Pub Google -->
+      <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-4993744918084781"
+        data-ad-slot="1234567890"
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </aside>
 
     <main class="flex-grow p-4 lg:p-8">
@@ -78,6 +86,11 @@
       <div id="videoInfo" class="mt-4 p-4 bg-gray-800 rounded-lg hidden">
         <h3 id="videoTitle" class="text-xl font-bold">Titre de la vidéo</h3>
       </div>
+
+      <!-- Bouton Partager -->
+      <button id="shareBtn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+        Partager cette vidéo
+      </button>
     </main>
 
     <aside class="w-full lg:w-80 bg-gray-800 p-6 border-l border-gray-700 flex flex-col space-y-8">
@@ -98,5 +111,20 @@
 
   <!-- Intégration du client JS -->
   <script src="/script.js"></script>
+
+  <!-- Script Partage -->
+  <script>
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.addEventListener('click', () => {
+      const videoId = window.currentVideoId;
+      if (!videoId) return alert("Aucune vidéo active.");
+      const shareUrl = `${window.location.origin}?v=${videoId}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Lien copié 📋 : " + shareUrl);
+      }).catch(() => {
+        alert("Voici le lien : " + shareUrl);
+      });
+    });
+  </script>
 </body>
 </html>
