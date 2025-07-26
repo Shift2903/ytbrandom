@@ -1,0 +1,15 @@
+{
+  "metaTitle": "YTB Random - Watch a random YouTube video",
+  "metaDescription": "Click and discover a totally random YouTube video.",
+  "catAll": "ALL",
+  "catMusic": "MUSIC",
+  "adTitle": "Advertisement",
+  "title": "Discover a Video.",
+  "description": "Click the button to launch a random YouTube video.",
+  "welcome": "Welcome!",
+  "welcomeSub": "Click the button on the right to start.",
+  "shareButton": "Share this video",
+  "button": "NEW VIDEO",
+  "historyTitle": "Session Activity",
+  "historyPlaceholder": "Your history will appear here..."
+}

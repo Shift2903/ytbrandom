@@ -1,0 +1,15 @@
+{
+  "metaTitle": "YTB Random - Mira un video de YouTube al azar",
+  "metaDescription": "Haz clic y descubre un video de YouTube totalmente al azar.",
+  "catAll": "TODO",
+  "catMusic": "MÚSICA",
+  "adTitle": "Publicidad",
+  "title": "Descubre un Video.",
+  "description": "Haz clic en el botón para lanzar un video de YouTube al azar.",
+  "welcome": "¡Bienvenido!",
+  "welcomeSub": "Haz clic en el botón de la derecha para empezar.",
+  "shareButton": "Compartir este video",
+  "button": "NUEVO VIDEO",
+  "historyTitle": "Actividad de la sesión",
+  "historyPlaceholder": "Tu historial aparecerá aquí..."
+}

@@ -114,15 +114,20 @@
   </div>
 
   <script src="/script.js"></script>
-  <script src="/lang.js"></script> <script>
+  <script src="/lang.js"></script>
+
+  <script>
     document.getElementById('shareBtn').addEventListener('click', () => {
       const videoId = window.currentVideoId;
       if (!videoId) return alert("Aucune vidéo active.");
-      const shareUrl = `${window.location.origin}?v=${videoId}`;
+      
+      // ✅ CORRECTION : On génère le lien direct vers YouTube
+      const shareUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert("Lien copié 📋 : " + shareUrl);
+        alert("Lien YouTube copié 📋 : " + shareUrl);
       }).catch(() => {
-        alert("Voici le lien : " + shareUrl);
+        alert("Voici le lien YouTube : " + shareUrl);
       });
     });
   </script>
