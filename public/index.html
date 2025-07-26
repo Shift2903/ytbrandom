@@ -2,19 +2,90 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>YT Random</title>
-  <!-- Votre CSS Tailwind ici, si besoin -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Le Bouton Vidéo Aléatoire</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .btn-3d { transition: all 0.15s ease-out; box-shadow: 0 5px 0 0 #c72b2b; }
+    .btn-3d:hover:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 0 #c72b2b; }
+    .btn-3d:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 0px 0 0 #c72b2b; }
+    .btn-3d:disabled { background-color: #ef4444; opacity: 0.7; cursor: not-allowed; }
+    #videoContainer { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .category-link.active { background-color: #ef4444; color: white; }
+    .lang-flag { cursor: pointer; transition: transform 0.2s; filter: grayscale(80%); opacity: 0.7; }
+    .lang-flag:hover, .lang-flag.active { transform: scale(1.2); filter: grayscale(0%); opacity: 1; }
+    .spinner { animation: spin 1s linear infinite; display: inline-block; margin-right: 0.75rem; width: 1.25rem; height: 1.25rem; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
 </head>
-<body class="p-4">
+<body class="bg-gray-900 text-gray-200">
 
-  <button id="btn" class="px-4 py-2 bg-blue-500 text-white rounded">
-    Trouver une vidéo
-  </button>
+  <nav class="w-full bg-gray-800 p-3 shadow-lg border-b border-gray-700 flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <span class="lang-flag" data-lang="fr" title="Français">🇫🇷</span>
+      <span class="lang-flag" data-lang="en" title="English">🇬🇧</span>
+      <span class="lang-flag" data-lang="es" title="Español">🇪🇸</span>
+      <span class="lang-flag" data-lang="de" title="Deutsch">🇩🇪</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <a href="#" class="category-link px-4 py-2 rounded-md text-sm font-bold" data-category="all">ALL</a>
+      <a href="#" class="category-link px-4 py-2 rounded-md text-sm font-bold" data-category="music">MUSIQUE</a>
+    </div>
+  </nav>
 
-  <h2 id="videotitle" class="mt-4 text-xl"></h2>
-  <div id="player" class="mt-2"></div>
+  <div class="flex flex-col lg:flex-row flex-grow" style="min-height: calc(100vh - 60px);">
+    <aside class="w-full lg:w-64 bg-gray-800 p-4 border-r border-gray-700 hidden lg:flex lg:flex-col">
+      <h2 class="text-lg font-bold mb-4" data-key="adTitle">Publicité</h2>
+      <div class="flex-grow bg-gray-700 rounded-lg flex items-center justify-center">
+        <span class="text-gray-500">Espace Pub 1</span>
+      </div>
+    </aside>
 
-  <!-- Assurez‑vous que ce <script> vient après tous les éléments du DOM -->
+    <main class="flex-grow p-4 lg:p-8">
+      <header class="mb-8">
+        <h1 data-key="title" class="text-4xl font-black text-white">Découvrez une Vidéo.</h1>
+        <p data-key="description" class="text-lg text-gray-400">Cliquez pour lancer une vidéo YouTube au hasard.</p>
+      </header>
+
+      <div id="videoContainer" class="rounded-xl overflow-hidden shadow-2xl">
+        <div id="player"></div>
+        <div id="welcomeMessage" class="h-full flex flex-col items-center justify-center text-center p-8 absolute inset-0 text-white bg-black bg-opacity-50">
+          <svg class="w-24 h-24 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h2 data-key="welcome" class="text-3xl font-semibold mt-4">Bienvenue !</h2>
+          <p data-key="welcomeSub" class="mt-2 text-lg text-gray-400">Cliquez sur le bouton à droite pour commencer.</p>
+        </div>
+      </div>
+
+      <div id="videoInfo" class="mt-4 p-4 bg-gray-800 rounded-lg hidden">
+        <h3 id="videoTitle" class="text-xl font-bold">Titre de la vidéo</h3>
+      </div>
+    </main>
+
+    <aside class="w-full lg:w-80 bg-gray-800 p-6 border-l border-gray-700 flex flex-col space-y-8">
+      <button id="btn" class="w-full bg-red-600 text-white font-bold text-xl px-6 py-4 rounded-xl shadow-lg btn-3d flex items-center justify-center">
+        <span data-key="button">NOUVELLE VIDÉO</span>
+      </button>
+
+      <div class="flex-grow flex flex-col min-h-0">
+        <h2 class="text-lg font-bold mb-4" data-key="historyTitle">Activité de la session</h2>
+        <div id="historyContainer" class="bg-gray-900 rounded-lg p-3 space-y-2 flex-grow overflow-y-auto">
+          <p id="historyPlaceholder" class="text-sm text-gray-400" data-key="historyPlaceholder">
+            Votre historique apparaîtra ici...
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Intégration du client JS -->
   <script src="/script.js"></script>
 </body>
 </html>
