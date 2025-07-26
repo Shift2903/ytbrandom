@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
-  // Sélection des éléments du DOM
+  // --- SÉLECTION DES ÉLÉMENTS DU DOM ---
   const btn = document.getElementById('btn');
   const player = document.getElementById('player');
   const welcomeMessage = document.getElementById('welcomeMessage');
@@ -10,34 +10,55 @@ document.addEventListener('DOMContentLoaded', () => {
   const videoTitleElem = document.getElementById('videoTitle');
   const historyContainer = document.getElementById('historyContainer');
   const historyPlaceholder = document.getElementById('historyPlaceholder');
+  const categoryLinks = document.querySelectorAll('.category-link');
+  
+  // --- GESTION DE LA CATÉGORIE ---
+  let currentCategory = 'all'; // Catégorie par défaut
+  
+  categoryLinks.forEach(link => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault(); // Empêche le lien de recharger la page
+      
+      // Met à jour la catégorie actuelle
+      currentCategory = link.dataset.category;
+      console.log(`Catégorie changée pour : ${currentCategory}`);
 
+      // Met à jour le style visuel
+      categoryLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  });
+  // Met "ALL" en actif par défaut au chargement
+  document.querySelector('.category-link[data-category="all"]').classList.add('active');
+
+
+  // --- GESTION DU CLIC SUR "NOUVELLE VIDÉO" ---
   btn.addEventListener('click', async () => {
-    console.log('🔘 Bouton cliqué, j’appelle /random-video');
+    console.log(`🔘 Bouton cliqué, j’appelle /random-video pour la catégorie : ${currentCategory}`);
     try {
       // Afficher le spinner dans le bouton
       btn.disabled = true;
       btn.innerHTML = `<div class="spinner"></div>`;
 
-      // Appel à votre serveur pour obtenir une vidéo
-      const resp = await fetch('/random-video');
+      // Appel à votre serveur en envoyant la catégorie sélectionnée
+      const resp = await fetch(`/random-video?category=${currentCategory}`);
+      
       console.log('✅ fetch ok, status =', resp.status);
       if (!resp.ok) throw new Error(`Erreur serveur ${resp.status}`);
 
       const { id, title } = await resp.json();
       console.log('📥 JSON reçu', id, title);
 
-      // --- CORRECTIONS ET AJOUTS ---
-
-      // 1. Mettre à jour l'ID de la vidéo pour le bouton Partager
+      // Mettre à jour l'ID de la vidéo pour le bouton Partager
       window.currentVideoId = id;
 
-      // 2. Cacher le message de bienvenue si présent
+      // Cacher le message de bienvenue
       if (welcomeMessage) welcomeMessage.style.display = 'none';
 
-      // 3. Mettre à jour l'historique
+      // Mettre à jour l'historique
       updateHistory({ id, title });
 
-      // 4. Injecter l'iframe avec la bonne URL YouTube
+      // Injecter l'iframe avec la bonne URL YouTube
       player.innerHTML = `
         <iframe
           width="100%" height="100%"
@@ -48,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </iframe>
       `;
 
-      // 5. Mettre à jour et afficher la boîte d’info avec le titre
+      // Mettre à jour et afficher la boîte d’info avec le titre
       if (videoTitleElem) {
         videoTitleElem.textContent = title;
         videoInfoBox.classList.remove('hidden');
@@ -58,38 +79,40 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
-      // Restaurer le bouton
+      // Restaurer le bouton (en tenant compte de la traduction)
       btn.disabled = false;
-      // Note: si vous utilisez la traduction, il faudra aussi retraduire le bouton ici
-      btn.innerHTML = `<span data-key="button">NOUVELLE VIDÉO</span>`;
+      const currentLang = localStorage.getItem('lang') || 'fr';
+      const buttonTextSpan = document.createElement('span');
+      buttonTextSpan.dataset.key = 'button';
+      btn.innerHTML = ''; // Vide le bouton (enlève le spinner)
+      btn.appendChild(buttonTextSpan);
+      
+      // Simule un clic sur le drapeau actuel pour retraduire le bouton
+      document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
     }
   });
 
   /**
    * Met à jour l'historique de la session avec la nouvelle vidéo.
-   * @param {object} video - L'objet vidéo avec un id et un titre.
    */
   function updateHistory(video) {
     if (!historyContainer) return;
 
-    // Cacher le message placeholder s'il est visible
     if (historyPlaceholder && !historyPlaceholder.classList.contains('hidden')) {
       historyPlaceholder.classList.add('hidden');
     }
 
-    // Création de l'élément d'historique
     const historyItem = document.createElement('a');
     historyItem.href = `https://www.youtube.com/watch?v=${video.id}`;
-    historyItem.target = '_blank'; // Ouvre dans un nouvel onglet
+    historyItem.target = '_blank';
     historyItem.rel = 'noopener noreferrer';
-    historyItem.className = 'history-item'; // Utilise les styles CSS ajoutés dans index.html
+    historyItem.className = 'history-item';
     
     historyItem.innerHTML = `
       <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" alt="Miniature de ${video.title}">
       <span>${video.title}</span>
     `;
 
-    // Ajoute le nouvel élément au début de la liste
     historyContainer.prepend(historyItem);
   }
 });
