@@ -1,60 +1,47 @@
-// server.js
-
 const express = require('express');
-const cors = require('cors');
-const { google } = require('googleapis');
-
+const fetch = require('node-fetch');
+const path = require('path');
 const app = express();
-const PORT = 3000;
+const port = process.env.PORT || 3000;
 
-// --- CONFIGURATION ---
-const YOUTUBE_API_KEY = 'AIzaSyDhkDLO9R4HW2B6D_9SKBE2aJxA9pmzcQQ';
-const youtube = google.youtube({ version: 'v3', auth: YOUTUBE_API_KEY });
+// Servir les fichiers statiques (HTML, CSS, JS) depuis le dossier 'public'
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(cors());
-app.use(express.json());
-
-// --- UTILITAIRE: tire une lettre aléatoire ---
+// Fonction pour obtenir une lettre au hasard
 function getRandomLetter() {
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
-  return letters.charAt(Math.floor(Math.random() * letters.length));
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    return alphabet[Math.floor(Math.random() * alphabet.length)];
 }
 
-// --- ROUTE: vidéo 100% aléatoire et valide ---
-app.get('/api/random-video', async (req, res) => {
-  try {
-    let video;
-    // Boucle jusqu'à trouver une vidéo valide
-    do {
-      const query = getRandomLetter();
-      const response = await youtube.search.list({
-        part: 'snippet',
-        q: query,
-        type: 'video',
-        maxResults: 1,
-      });
-      const items = response.data.items;
-      if (items && items.length > 0) {
-        const item = items[0];
-        // Vérifie que l'ID et le snippet sont présents
-        if (item.id && item.id.videoId && item.snippet) {
-          video = {
-            videoId: item.id.videoId,
-            title: item.snippet.title,
-            thumbnail: item.snippet.thumbnails.default.url,
-          };
+// Votre API pour trouver une vidéo aléatoire
+app.get('/random-video', async (req, res) => {
+    try {
+        const randomLetter = getRandomLetter();
+        const apiResponse = await fetch(`https://yt.lemnoslife.com/noKey/search?q=${randomLetter}`);
+        
+        if (!apiResponse.ok) {
+            throw new Error(`Erreur de l'API externe`);
         }
-      }
-    } while (!video);
+        
+        const data = await apiResponse.json();
+        const videos = data.items;
 
-    return res.json(video);
-  } catch (err) {
-    console.error('Erreur API YouTube:', err.message);
-    res.status(500).json({ message: 'Erreur lors de la requête YouTube.' });
-  }
+        if (!videos || videos.length === 0) {
+            return res.status(404).json({ message: 'Aucune vidéo trouvée.' });
+        }
+
+        const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+
+        res.json({
+            id: randomVideo.id.videoId,
+            title: randomVideo.snippet.title
+        });
+    } catch (error) {
+        console.error('Erreur:', error);
+        res.status(500).json({ message: 'Impossible de contacter le serveur de vidéos.' });
+    }
 });
 
-// --- LANCEMENT DU SERVEUR ---
-app.listen(PORT, () => {
-  console.log(`Serveur aléatoire démarré sur http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Serveur démarré sur le port ${port}`);
 });
