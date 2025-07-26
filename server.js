@@ -1,42 +1,54 @@
+// server.js
 import express from 'express';
 import fetch from 'node-fetch';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname  = path.dirname(__filename);
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
+const KEY  = process.env.YOUTUBE_API_KEY;
 
-// Servir les fichiers statiques du dossier public
+if (!KEY) {
+  console.error('🛑 La variable YOUTUBE_API_KEY n’est pas définie.');
+  process.exit(1);
+}
+
+// Servir le dossier public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route de debug simple
-app.get('/hello', (req, res) => {
-  res.send('👋 Bonjour !');
-});
+// Route de debug
+app.get('/hello', (req, res) => res.send('👋 Bonjour !'));
 
-// Route principale pour récupérer une vidéo aléatoire
+// Route principale
 app.get('/random-video', async (req, res) => {
   try {
     // 1) Lettre aléatoire
     const letters = 'abcdefghijklmnopqrstuvwxyz';
-    const letter = letters[Math.floor(Math.random() * letters.length)];
+    const letter  = letters[Math.floor(Math.random() * letters.length)];
 
-    // 2) Requête à l’API LemnosLife
-    const apiRes = await fetch(`https://yt.lemnoslife.com/noKey/search?q=${letter}`);
+    // 2) Requête à l’API YouTube Data v3
+    const url = new URL('https://www.googleapis.com/youtube/v3/search');
+    url.searchParams.set('part',       'snippet');
+    url.searchParams.set('type',       'video');
+    url.searchParams.set('q',          letter);
+    url.searchParams.set('maxResults', '25');
+    url.searchParams.set('key',        KEY);
+
+    const apiRes = await fetch(url);
     if (!apiRes.ok) {
       const body = await apiRes.text();
-      console.error(`🔴 LemnosLife API erreur ${apiRes.status} :`, body);
-      throw new Error(`API externe en erreur (${apiRes.status})`);
+      console.error(`🔴 YouTube API erreur ${apiRes.status} :`, body);
+      throw new Error(`YouTube API en erreur (${apiRes.status})`);
     }
     const data = await apiRes.json();
 
-    // 3) Vérifier que data.items existe et contient des vidéos
+    // 3) Vérifier qu’il y a bien des vidéos
     const videos = data.items || [];
     if (!videos.length) {
-      console.error('🔴 Aucun item dans data.items pour la lettre', letter, data);
+      console.error('🔴 Pas de vidéos pour la lettre', letter, data);
       throw new Error('Pas de vidéo reçue');
     }
 
@@ -46,12 +58,11 @@ app.get('/random-video', async (req, res) => {
 
   } catch (err) {
     console.error('💥 Erreur dans /random-video :', err.stack);
-    // Ne renvoyez la stack qu’en debug ; en production, vous pouvez retirer stack
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Démarrage du serveur
+// Lancement du serveur
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
 });
