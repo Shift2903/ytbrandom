@@ -1,13 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('✨ script.js chargé');
+  console.log('✨ script.js pour le nouveau design chargé');
 
   // --- SÉLECTION DES ÉLÉMENTS DU DOM ---
-  const btnDesktop = document.getElementById('btn-desktop');
-  const btnMobile = document.getElementById('btn-mobile');
-  const allBtns = [btnDesktop, btnMobile];
-
+  const btn = document.getElementById('btn');
   const player = document.getElementById('player');
-  const welcomeMessage = document.getElementById('welcomeMessage');
   const videoInfoBox = document.getElementById('videoInfo');
   const videoTitleElem = document.getElementById('videoTitle');
   const videoDateElem = document.getElementById('videoDate');
@@ -22,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- LOGIQUE DU SÉLECTEUR DE THÈME ---
   themeSwitcher.addEventListener('click', () => {
     docHtml.classList.toggle('dark');
-    // Sauvegarde le choix dans le localStorage
     if (docHtml.classList.contains('dark')) {
       localStorage.setItem('theme', 'dark');
     } else {
@@ -30,114 +25,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Applique le thème sauvegardé au chargement de la page
+  // Applique le thème sauvegardé au chargement
   if (localStorage.getItem('theme') === 'dark') {
     docHtml.classList.add('dark');
+  } else {
+    docHtml.classList.remove('dark'); // Assure le thème clair par défaut
   }
 
-  // --- LOGIQUE DE GESTION DES CATÉGORIES ET DE L'APPLICATION ---
-
-  function updateButtonText() {
-    const buttonTextSpanDesktop = document.querySelector('#btn-desktop > span');
-    if (buttonTextSpanDesktop) {
-        const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-        buttonTextSpanDesktop.dataset.key = key;
-    }
-    const currentLang = localStorage.getItem('lang') || 'fr';
-    document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
-  }
-
+  // --- LOGIQUE DE L'APPLICATION ---
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     console.log(`Catégorie définie sur : ${currentCategory}`);
-
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
-    
-    updateButtonText();
-
     if (!fromHistory) {
       const newUrl = (category === 'music') ? '/music' : (category === 'video') ? '/video' : '/';
-      const newTitle = `YTB Random - ${category}`;
-      history.pushState({ category: category }, newTitle, newUrl);
+      history.pushState({ category: category }, `YTB Random - ${category}`, newUrl);
     }
   }
 
   categoryLinks.forEach(link => {
     link.addEventListener('click', (event) => {
       event.preventDefault(); 
-      const category = link.dataset.category;
-      setCategory(category);
+      setCategory(link.dataset.category);
     });
   });
 
   const initialPath = window.location.pathname;
-  if (initialPath === '/music') {
+  if (initialPath.includes('/music')) {
     setCategory('music', true);
-  } else if (initialPath === '/video') {
+  } else if (initialPath.includes('/video')) {
     setCategory('video', true);
   } else {
     setCategory('all', true);
   }
 
-  allBtns.forEach(btn => {
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
-      console.log(`🔘 Bouton cliqué (${btn.id}), catégorie : ${currentCategory}`);
-      try {
-        allBtns.forEach(b => {
-          if (b) {
-            b.disabled = true;
-            b.innerHTML = `<div class="spinner"></div>`;
+  btn.addEventListener('click', async () => {
+    console.log(`🔘 Bouton cliqué, catégorie : ${currentCategory}`);
+    try {
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div>`;
+      const resp = await fetch(`/random-video?category=${currentCategory}`);
+      if (!resp.ok) throw new Error(`Erreur serveur ${resp.status}`);
+      
+      const { id, title, publishedAt } = await resp.json();
+      
+      window.currentVideoId = id;
+      updateHistory({ id, title });
+      player.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      
+      if (videoTitleElem) {
+        videoTitleElem.textContent = title;
+        if (videoDateElem && publishedAt) {
+          const videoDate = new Date(publishedAt);
+          const today = new Date();
+          let yearsAgo = today.getFullYear() - videoDate.getFullYear();
+          const m = today.getMonth() - videoDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < videoDate.getDate())) {
+            yearsAgo--;
           }
-        });
-
-        const resp = await fetch(`/random-video?category=${currentCategory}`);
-        if (!resp.ok) throw new Error(`Erreur serveur ${resp.status}`);
-        
-        const { id, title, publishedAt } = await resp.json();
-        
-        window.currentVideoId = id;
-        if (welcomeMessage) welcomeMessage.style.display = 'none';
-        updateHistory({ id, title });
-        player.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-        
-        if (videoTitleElem) {
-          videoTitleElem.textContent = title;
-          if (videoDateElem && publishedAt) {
-            const videoDate = new Date(publishedAt);
-            const today = new Date();
-            let yearsAgo = today.getFullYear() - videoDate.getFullYear();
-            const m = today.getMonth() - videoDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < videoDate.getDate())) {
-              yearsAgo--;
-            }
-            const formattedDate = videoDate.toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
-            const yearText = (yearsAgo <= 1) ? "an" : "ans";
-            videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
-          }
-          videoInfoBox.classList.remove('hidden');
+          const formattedDate = videoDate.toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+          const yearText = (yearsAgo <= 1) ? "an" : "ans";
+          videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
         }
-      } catch (e) {
-        console.error('🔥 Erreur côté client :', e);
-        alert('Erreur: Impossible de charger une vidéo.');
-      } finally {
-        if (btnDesktop) {
-          btnDesktop.disabled = false;
-          const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
-          const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-          btnDesktop.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
-        }
-        if (btnMobile) {
-          btnMobile.disabled = false;
-          btnMobile.innerHTML = `<span>▶</span>`;
-        }
-        
-        const currentLang = localStorage.getItem('lang') || 'fr';
-        document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+        videoInfoBox.classList.remove('hidden');
       }
-    });
+    } catch (e) {
+      console.error('🔥 Erreur côté client :', e);
+      alert('Erreur: Impossible de charger une vidéo.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<span data-key="button">NOUVELLE VIDÉO</span>`;
+    }
   });
 
   function updateHistory(video) {
@@ -149,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     historyItem.href = `https://www.youtube.com/watch?v=${video.id}`;
     historyItem.target = '_blank';
     historyItem.rel = 'noopener noreferrer';
-    historyItem.className = 'history-item';
+    historyItem.className = 'history-item p-2 rounded-md flex items-center gap-3';
     historyItem.innerHTML = `<img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" alt="Miniature de ${video.title}"><span>${video.title}</span>`;
     historyContainer.prepend(historyItem);
   }
