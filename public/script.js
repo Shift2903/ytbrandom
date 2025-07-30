@@ -1,4 +1,4 @@
-// public/script.js (Correction finale du bouton)
+// public/script.js (Correction finale et robuste du bouton)
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
@@ -18,11 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const buttonTextSpan = document.querySelector('#btn > span');
     if (!buttonTextSpan) return;
     
-    // 1. Choisir la bonne clé de traduction
-    const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-    buttonTextSpan.dataset.key = key;
+    // Choisir la bonne clé de traduction
+    buttonTextSpan.dataset.key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
     
-    // 2. Déclencher la retraduction
+    // Déclencher la retraduction
     const currentLang = localStorage.getItem('lang') || 'fr';
     document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
   }
@@ -84,12 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
-      // ✅ CORRECTION FINALE : Restauration du bouton
+      // ✅ --- CORRECTION DÉFINITIVE --- ✅
       btn.disabled = false;
-      const buttonTextSpan = document.createElement('span');
-      btn.innerHTML = '';
-      btn.appendChild(buttonTextSpan);
-      updateButtonText(); // Appelle la nouvelle fonction pour mettre à jour le texte
+      
+      // On choisit le texte et la clé par défaut en fonction de la catégorie
+      const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
+      const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+
+      // On restaure directement le bouton avec son contenu et son texte. Il ne peut plus être vide.
+      btn.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
+      
+      // On applique ensuite la bonne langue par-dessus le texte par défaut
+      const currentLang = localStorage.getItem('lang') || 'fr';
+      document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
     }
   });
 
