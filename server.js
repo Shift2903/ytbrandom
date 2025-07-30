@@ -1,4 +1,4 @@
-// server.js (Version Finale avec Cache et gestion des routes)
+// server.js (Version doublement corrigée)
 import express from 'express';
 import fetch from 'node-fetch';
 import 'dotenv/config';
@@ -19,7 +19,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 async function fetchNewVideoBatch(category) {
   console.log(`Cache pour '${category}' vide. Appel à l'API YouTube...`);
-
   const baseParams = new URLSearchParams({
     part: 'snippet',
     maxResults: 50,
@@ -38,14 +37,14 @@ async function fetchNewVideoBatch(category) {
       randomQuery += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     baseParams.set('q', randomQuery);
+    // ✅ CORRECTION N°1 : Remplacement de 'base' par 'baseParams'
     baseParams.set('regionCode', 'FR');
   }
   
-  // ✅ CORRECTION DÉFINITIVE DU BUG : Utilisation des backticks `` au lieu des apostrophes ''
-  const YOUTUBE_API_URL = `youtube.com/watch?v={baseParams.toString()}`;
+  // ✅ CORRECTION N°2 : Utilisation des backticks `` au lieu des apostrophes ''
+  const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/search?${baseParams.toString()}`;
   
   console.log("Appel API:", YOUTUBE_API_URL);
-
   const response = await fetch(YOUTUBE_API_URL);
   if (!response.ok) {
     throw new Error(`Erreur de l'API YouTube (${response.status})`);
