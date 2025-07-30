@@ -1,4 +1,4 @@
-// server.js (Version Finale avec Cache, Hasard Amélioré et Date de Publication)
+// server.js (Version Finale avec Cache Horodaté)
 import express from 'express';
 import fetch from 'node-fetch';
 import 'dotenv/config';
@@ -12,9 +12,14 @@ const API_KEY = process.env.YOUTUBE_API_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let musicVideoCache = [];
-let videoVideoCache = [];
-let allVideoCache = [];
+// ✅ NOUVELLE STRUCTURE POUR LE CACHE : on stocke les vidéos ET la date de la pioche
+const cache = {
+  music: { videos: [], timestamp: null },
+  video: { videos: [], timestamp: null },
+  all:   { videos: [], timestamp: null }
+};
+
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 heure en millisecondes
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -26,11 +31,10 @@ function getRandomDate() {
 }
 
 async function fetchNewVideoBatch(category) {
-  console.log(`Cache pour '${category}' vide. Appel à l'API YouTube...`);
-
+  console.log(`Cache pour '${category}' expiré ou vide. Appel à l'API YouTube...`);
   const baseParams = new URLSearchParams({
     part: 'snippet',
-    maxResults: 50,
+    maxResults: 15,
     type: 'video',
     key: API_KEY,
   });
@@ -53,11 +57,10 @@ async function fetchNewVideoBatch(category) {
     }
     baseParams.set('q', randomQuery);
     baseParams.set('publishedBefore', getRandomDate());
-    baseParams.set('order', 'relevance'); 
+    baseParams.set('order', 'date'); 
   }
   
   const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/search?${baseParams.toString()}`;
-  console.log("Appel API:", YOUTUBE_API_URL);
   const response = await fetch(YOUTUBE_API_URL);
   if (!response.ok) {
     const errorBody = await response.text();
@@ -70,36 +73,27 @@ async function fetchNewVideoBatch(category) {
 
 app.get('/random-video', async (req, res) => {
   const category = req.query.category || 'all';
+  const now = Date.now(); // On récupère l'heure actuelle
+  const categoryCache = cache[category]; // On sélectionne le bon cache
+
   try {
-    let video;
-    let cache;
-
-    if (category === 'music') cache = musicVideoCache;
-    else if (category === 'video') cache = videoVideoCache;
-    else cache = allVideoCache;
-
-    if (cache.length === 0) {
-      const newBatch = await fetchNewVideoBatch(category);
-      if (category === 'music') musicVideoCache.push(...newBatch);
-      else if (category === 'video') videoVideoCache.push(...newBatch);
-      else allVideoCache.push(...newBatch);
+    // ✅ NOUVELLE VÉRIFICATION : le cache est-il vide OU a-t-il plus d'une heure ?
+    if (categoryCache.videos.length === 0 || (now - categoryCache.timestamp > CACHE_DURATION_MS)) {
+      categoryCache.videos = await fetchNewVideoBatch(category);
+      categoryCache.timestamp = now; // On met à jour l'heure de la pioche
     }
-    
-    if (category === 'music') cache = musicVideoCache;
-    else if (category === 'video') cache = videoVideoCache;
-    else cache = allVideoCache;
 
-    video = cache.pop();
+    const video = categoryCache.videos.pop();
 
     if (!video) {
+      // Si le cache est vide même après l'appel, c'est que l'API n'a rien renvoyé
       return res.status(404).json({ error: 'Aucune vidéo trouvée, essayez à nouveau.' });
     }
     
-    // On envoie maintenant un objet complet avec la date
     const videoData = {
       id: video.id.videoId,
       title: video.snippet.title,
-      publishedAt: video.snippet.publishedAt // Ajout de la date
+      publishedAt: video.snippet.publishedAt
     };
 
     res.json(videoData);
