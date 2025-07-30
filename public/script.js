@@ -13,16 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   let currentCategory = 'all'; 
 
-  // Fonction pour gérer le changement de catégorie
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     console.log(`Catégorie définie sur : ${currentCategory}`);
-
-    // Met à jour le style visuel
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
-
-    // ✅ AJOUT : Change l'URL dans le navigateur sans recharger la page
     if (!fromHistory) {
       const newUrl = (category === 'music') ? '/music' : '/';
       const newTitle = (category === 'music') ? 'YTB Random - Musique' : 'YTB Random - Tout';
@@ -30,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Gère les clics sur les liens de catégorie
   categoryLinks.forEach(link => {
     link.addEventListener('click', (event) => {
       event.preventDefault(); 
@@ -39,15 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ✅ AJOUT : Gère l'état initial au chargement de la page
   const initialPath = window.location.pathname;
   if (initialPath === '/music') {
     setCategory('music', true);
   } else {
     setCategory('all', true);
   }
-
-  // ... (le reste de votre script.js reste identique) ...
 
   btn.addEventListener('click', async () => {
     console.log(`🔘 Bouton cliqué, j’appelle /random-video pour la catégorie : ${currentCategory}`);
@@ -69,13 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
+      // ✅ --- DÉBUT DE LA CORRECTION --- ✅
       btn.disabled = false;
+      // On restaure directement le bouton avec son contenu HTML par défaut
+      btn.innerHTML = `<span data-key="button">NOUVELLE VIDÉO</span>`;
+      
+      // On s'assure que le texte est dans la bonne langue
       const currentLang = localStorage.getItem('lang') || 'fr';
-      const buttonTextSpan = document.createElement('span');
-      buttonTextSpan.dataset.key = 'button';
-      btn.innerHTML = '';
-      btn.appendChild(buttonTextSpan);
       document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+      // ✅ --- FIN DE LA CORRECTION --- ✅
     }
   });
 
