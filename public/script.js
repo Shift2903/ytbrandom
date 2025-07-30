@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('✨ script.js final chargé (avec traduction)');
+  console.log('✨ script.js final (avec traduction) chargé');
 
-  // --- SÉLECTION DES ÉLÉMENTS DU DOM ---
   const btn = document.getElementById('btn');
+  const adLinkBtn = document.getElementById('adLinkBtn');
   const player = document.getElementById('videoContainer');
   const videoInfoBox = document.getElementById('videoInfo');
   const videoTitleElem = document.getElementById('videoTitle');
@@ -15,9 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const langFlags = document.querySelectorAll('.lang-flag');
   
   let currentCategory = 'all';
-  let translations = {}; // Pour stocker les traductions chargées
+  let translations = {};
 
-  // --- LOGIQUE DU THÈME ---
   themeSwitcher.addEventListener('click', () => {
     docHtml.classList.toggle('dark');
     localStorage.setItem('theme', docHtml.classList.contains('dark') ? 'dark' : 'light');
@@ -27,13 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     docHtml.classList.add('dark');
   }
 
-  // --- LOGIQUE DE TRADUCTION (INTÉGRÉE DEPUIS lang.js) ---
   function applyTranslations() {
     document.querySelectorAll('[data-key]').forEach(el => {
       const key = el.dataset.key;
-      if (translations[key]) {
-        el.textContent = translations[key];
-      }
+      if (translations[key]) el.textContent = translations[key];
     });
   }
 
@@ -45,22 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('lang', lang);
       langFlags.forEach(f => f.classList.remove('active'));
       document.querySelector(`.lang-flag[data-lang="${lang}"]`)?.classList.add('active');
-    } catch (e) {
-      console.error("Erreur de traduction :", e);
-    }
+    } catch (e) { console.error("Erreur de traduction :", e); }
   }
 
   langFlags.forEach(flag => {
     flag.addEventListener('click', () => setLanguage(flag.dataset.lang));
   });
 
-  // --- LOGIQUE DE L'APPLICATION ---
   function updateButtonText() {
     const buttonTextSpan = document.querySelector('#btn > span');
     if (!buttonTextSpan) return;
     const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
     buttonTextSpan.dataset.key = key;
-    applyTranslations(); // On applique directement les traductions
+    applyTranslations();
   }
 
   function setCategory(category, fromHistory = false) {
@@ -78,10 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('click', (e) => { e.preventDefault(); setCategory(link.dataset.category); });
   });
   
-  // Initialisation de la page
   async function initializePage() {
-    const savedLang = localStorage.getItem('lang') || 'fr';
-    await setLanguage(savedLang); // On charge la langue AVANT de définir la catégorie
+    let initialLang = localStorage.getItem('lang');
+    if (!initialLang) {
+      const browserLang = navigator.language.split('-')[0];
+      const supportedLangs = ['fr', 'en', 'es', 'de'];
+      initialLang = supportedLangs.includes(browserLang) ? browserLang : 'fr';
+    }
+    await setLanguage(initialLang);
     
     const initialPath = window.location.pathname;
     if (initialPath.includes('/music')) setCategory('music', true);
@@ -91,6 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
   
   initializePage();
 
+  if (adLinkBtn) {
+    adLinkBtn.addEventListener('click', () => {
+      const directLinkUrl = 'https://doorwaydistinct.com/jcw2vz016?key=2ff14b592c85850b82fe3d09160c215e';
+      window.open(directLinkUrl, '_blank');
+    });
+  }
+
   btn.addEventListener('click', async () => {
     try {
       btn.disabled = true;
@@ -98,14 +102,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const resp = await fetch(`/random-video?category=${currentCategory}`);
       if (!resp.ok) throw new Error(`Erreur serveur ${resp.status}`);
       const { id, title, publishedAt } = await resp.json();
-      
       window.currentVideoId = id;
       updateHistory({ id, title });
       player.innerHTML = `<iframe id="player" width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      
       videoTitleElem.textContent = title;
       if (publishedAt) {
-        // ... (logique de la date identique) ...
+        const videoDate = new Date(publishedAt);
+        const today = new Date();
+        let yearsAgo = today.getFullYear() - videoDate.getFullYear();
+        const m = today.getMonth() - videoDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < videoDate.getDate())) yearsAgo--;
+        
+        const formattedDate = videoDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const yearText = (yearsAgo <= 1) ? "an" : "ans";
+        videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
       }
       videoInfoBox.classList.remove('hidden');
 
@@ -114,8 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<span data-key=""></span>`; // On crée un span vide
-      updateButtonText(); // La fonction s'occupe de tout
+      const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
+      const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+      btn.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
+      applyTranslations();
     }
   });
 

@@ -12,18 +12,12 @@
   <link rel="icon" type="image/png" href="favicon.png">
 
   <style>
-    /* --- Styles de Base --- */
-    body { 
-      font-family: 'Inter', sans-serif; 
-      transition: background-color 0.3s, color 0.3s;
-    }
+    body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
     .spinner { animation: spin 1s linear infinite; display: inline-block; width: 1.25rem; height: 1.25rem; border: 3px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; }
     .dark .spinner { border-color: rgba(255,255,255,0.2); border-top-color: #fff; }
     #videoContainer { position: relative; width: 100%; padding-top: 56.25%; background-color: #e2e8f0; }
     .dark #videoContainer { background-color: #000; }
     #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-
-    /* --- Thème Clair (par défaut) --- */
     body { background-color: #f8fafc; color: #0f172a; }
     .theme-bg { background-color: #ffffff; }
     .theme-text-secondary { color: #64748b; }
@@ -34,8 +28,6 @@
     .history-item:hover { background-color: #f1f5f9; }
     #theme-moon { display: block; }
     #theme-sun { display: none; }
-
-    /* --- Thème Sombre (activé avec la classe .dark) --- */
     .dark body { background-color: #020617; color: #e2e8f0; }
     .dark .theme-bg { background-color: #0f172a; }
     .dark .theme-text-secondary { color: #94a3b8; }
@@ -46,8 +38,6 @@
     .dark .history-item:hover { background-color: #1e293b; }
     .dark #theme-moon { display: none; }
     .dark #theme-sun { display: block; }
-
-    /* --- Styles Communs Minimalistes --- */
     .btn-primary { transition: background-color 0.15s ease-out; }
     .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
     .category-link { border-bottom: 2px solid transparent; transition: all 0.2s; color: #64748b; }
@@ -55,31 +45,29 @@
     .history-item { transition: background-color 0.2s ease-out; }
     .history-item img { width: 64px; height: 36px; border-radius: 0.25rem; object-fit: cover; flex-shrink: 0; }
     .history-item span { flex-grow: 1; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+    .lang-flag { cursor: pointer; transition: transform 0.2s; filter: grayscale(80%); opacity: 0.7; }
+    .lang-flag:hover, .lang-flag.active { transform: scale(1.2); filter: grayscale(0%); opacity: 1; }
   </style>
 </head>
 <body>
-
   <div class="flex flex-col lg:flex-row h-screen">
-    
     <aside class="w-full lg:w-64 p-6 hidden lg:flex flex-col items-center justify-center theme-bg theme-border border-r">
-      <h2 class="text-sm font-bold mb-4 theme-text-secondary uppercase tracking-wider" data-key="adTitle">Publicité</h2>
-      <div class="w-full h-full flex items-center justify-center">
-        <script type="text/javascript"> atOptions = { 'key' : '9238c2b5eaaf29fde32d2c1ddfd0a4e7', 'format' : 'iframe', 'height' : 600, 'width' : 160, 'params' : {} }; </script>
-        <script type="text/javascript" src="//www.highperformanceformat.com/9238c2b5eaaf29fde32d2c1ddfd0a4e7/invoke.js"></script>
-      </div>
-    </aside>
-
+        </aside>
     <main class="flex-grow p-6 lg:p-12 flex flex-col">
       <header class="flex-shrink-0 flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-4">
+          <span class="lang-flag" data-lang="fr" title="Français">🇫🇷</span>
+          <span class="lang-flag" data-lang="en" title="English">🇬🇧</span>
+          <span class="lang-flag" data-lang="es" title="Español">🇪🇸</span>
+          <span class="lang-flag" data-lang="de" title="Deutsch">🇩🇪</span>
+        </div>
         <div class="flex items-center space-x-6">
           <a href="#" class="category-link pb-1 text-sm font-medium" data-category="all" data-key="catAll">ALL</a>
           <a href="#" class="category-link pb-1 text-sm font-medium" data-category="video" data-key="catVideo">VIDEO</a>
           <a href="#" class="category-link pb-1 text-sm font-medium" data-category="music" data-key="catMusic">MUSIQUE</a>
         </div>
         <div id="theme-switcher" class="cursor-pointer p-2 rounded-full">
-          <svg id="theme-moon" class="w-6 h-6 theme-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-          <svg id="theme-sun" class="w-6 h-6 theme-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-        </div>
+          </div>
       </header>
       <div id="videoContainer" class="rounded-lg overflow-hidden w-full flex-grow shadow-lg"></div>
       <div id="videoInfo" class="mt-4 p-2 hidden">
@@ -88,11 +76,10 @@
                 <h3 id="videoTitle" class="text-lg font-bold">Titre de la vidéo</h3>
                 <p id="videoDate" class="text-sm theme-text-secondary mt-1"></p>
             </div>
-            <button id="adLinkBtn" class="text-sm font-medium theme-text-secondary hover:underline" data-key="shareButton">Partager</button>
+            <button id="adLinkBtn" data-key="shareButton" class="px-4 py-2 text-sm font-bold rounded-lg transition-colors bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">Partager</button>
         </div>
       </div>
     </main>
-
     <aside class="w-full lg:w-80 p-6 flex flex-col space-y-6 theme-bg theme-border border-l">
       <button id="btn" class="w-full font-bold text-sm py-3 rounded-lg shadow-lg btn-primary flex items-center justify-center">
         <span data-key="button">NOUVELLE VIDÉO</span>
@@ -103,15 +90,8 @@
           <p id="historyPlaceholder" class="text-sm theme-text-secondary" data-key="historyPlaceholder">Votre historique apparaîtra ici...</p>
         </div>
       </div>
-      <div class="lg:hidden mt-4 flex justify-center">
-        <script type="text/javascript">
-          atOptions = { 'key' : 'fba8efc7e6bac2a226111403c8c07721', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
-        </script>
-        <script type="text/javascript" src="//doorwaydistinct.com/fba8efc7e6bac2a226111403c8c07721/invoke.js"></script>
-      </div>
     </aside>
   </div>
-  
   <script src="/script.js"></script>
 </body>
 </html>
