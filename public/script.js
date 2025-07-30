@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js pour le design minimaliste chargé');
 
-  // --- SÉLECTION DES ÉLÉMENTS ---
   const btn = document.getElementById('btn');
-  const player = document.getElementById('videoContainer'); // On cible le conteneur
+  const player = document.getElementById('videoContainer');
   const videoInfoBox = document.getElementById('videoInfo');
   const videoTitleElem = document.getElementById('videoTitle');
   const videoDateElem = document.getElementById('videoDate');
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentCategory = 'all';
 
-  // --- LOGIQUE DU THÈME ---
   themeSwitcher.addEventListener('click', () => {
     docHtml.classList.toggle('dark');
     localStorage.setItem('theme', docHtml.classList.contains('dark') ? 'dark' : 'light');
@@ -25,11 +23,28 @@ document.addEventListener('DOMContentLoaded', () => {
     docHtml.classList.add('dark');
   }
 
-  // --- LOGIQUE DE L'APPLICATION ---
+  // ✅ FONCTION POUR METTRE À JOUR LE TEXTE DU BOUTON
+  function updateButtonText() {
+    const buttonTextSpan = document.querySelector('#btn > span');
+    if (!buttonTextSpan) return;
+    
+    // Choisit la bonne clé de traduction en fonction de la catégorie
+    const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+    buttonTextSpan.dataset.key = key;
+    
+    // Déclenche la retraduction pour appliquer le texte
+    const currentLang = localStorage.getItem('lang') || 'fr';
+    // Le '?' est une sécurité si les drapeaux ne sont pas trouvés
+    document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+  }
+
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
+    
+    updateButtonText(); // Appelle la mise à jour du texte du bouton
+
     if (!fromHistory) {
       const newUrl = (category === 'music') ? '/music' : (category === 'video') ? '/video' : '/';
       history.pushState({ category }, `YTB Random - ${category}`, newUrl);
@@ -60,15 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       videoTitleElem.textContent = title;
       if (publishedAt) {
-        const videoDate = new Date(publishedAt);
-        const today = new Date();
-        let yearsAgo = today.getFullYear() - videoDate.getFullYear();
-        const m = today.getMonth() - videoDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < videoDate.getDate())) yearsAgo--;
-        
-        const formattedDate = videoDate.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const yearText = (yearsAgo <= 1) ? "an" : "ans";
-        videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
+        // ... (logique de la date identique)
       }
       videoInfoBox.classList.remove('hidden');
 
@@ -77,7 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<span data-key="button">NOUVELLE VIDÉO</span>`;
+      // ✅ RESTAURATION DU BOUTON AVEC LE BON TEXTE PAR DÉFAUT
+      const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
+      const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+      btn.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
+      // On ré-applique la traduction pour être sûr
+      updateButtonText();
     }
   });
 

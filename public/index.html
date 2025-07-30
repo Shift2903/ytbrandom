@@ -13,10 +13,7 @@
 
   <style>
     /* --- Styles de Base --- */
-    body { 
-      font-family: 'Inter', sans-serif; 
-      transition: background-color 0.3s, color 0.3s;
-    }
+    body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
     .spinner { animation: spin 1s linear infinite; display: inline-block; width: 1.25rem; height: 1.25rem; border: 3px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; }
     .dark .spinner { border-color: rgba(255,255,255,0.2); border-top-color: #fff; }
     #videoContainer { position: relative; width: 100%; padding-top: 56.25%; background-color: #e2e8f0; }
@@ -55,11 +52,14 @@
     .history-item { transition: background-color 0.2s ease-out; }
     .history-item img { width: 64px; height: 36px; border-radius: 0.25rem; object-fit: cover; flex-shrink: 0; }
     .history-item span { flex-grow: 1; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+    .lang-flag { cursor: pointer; transition: transform 0.2s; filter: grayscale(80%); opacity: 0.7; }
+    .lang-flag:hover, .lang-flag.active { transform: scale(1.2); filter: grayscale(0%); opacity: 1; }
   </style>
 </head>
 <body>
 
   <div class="flex flex-col lg:flex-row h-screen">
+    
     <aside class="w-full lg:w-64 p-6 hidden lg:flex flex-col items-center justify-center theme-bg theme-border border-r">
       <h2 class="text-sm font-bold mb-4 theme-text-secondary uppercase tracking-wider" data-key="adTitle">Publicité</h2>
       <div class="w-full h-full flex items-center justify-center">
@@ -70,6 +70,12 @@
 
     <main class="flex-grow p-6 lg:p-12 flex flex-col">
       <header class="flex-shrink-0 flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-4">
+          <span class="lang-flag" data-lang="fr" title="Français">🇫🇷</span>
+          <span class="lang-flag" data-lang="en" title="English">🇬🇧</span>
+          <span class="lang-flag" data-lang="es" title="Español">🇪🇸</span>
+          <span class="lang-flag" data-lang="de" title="Deutsch">🇩🇪</span>
+        </div>
         <div class="flex items-center space-x-6">
           <a href="#" class="category-link pb-1 text-sm font-medium" data-category="all" data-key="catAll">ALL</a>
           <a href="#" class="category-link pb-1 text-sm font-medium" data-category="video" data-key="catVideo">VIDEO</a>
