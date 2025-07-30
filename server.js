@@ -1,4 +1,4 @@
-// server.js (Version avec catégorie "Vidéo" en plus)
+// server.js (Version Finale avec Cache, Hasard Amélioré et Date de Publication)
 import express from 'express';
 import fetch from 'node-fetch';
 import 'dotenv/config';
@@ -12,7 +12,6 @@ const API_KEY = process.env.YOUTUBE_API_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// On ajoute un cache pour la nouvelle catégorie
 let musicVideoCache = [];
 let videoVideoCache = [];
 let allVideoCache = [];
@@ -28,6 +27,7 @@ function getRandomDate() {
 
 async function fetchNewVideoBatch(category) {
   console.log(`Cache pour '${category}' vide. Appel à l'API YouTube...`);
+
   const baseParams = new URLSearchParams({
     part: 'snippet',
     maxResults: 50,
@@ -37,18 +37,15 @@ async function fetchNewVideoBatch(category) {
 
   if (category === 'music') {
     baseParams.set('q', '"Official Audio" | "Topic"');
-    baseParams.set('videoCategoryId', '10'); // Catégorie Musique
+    baseParams.set('videoCategoryId', '10');
     baseParams.set('order', 'relevance');
-  } 
-  // ✅ NOUVELLE LOGIQUE POUR LA CATÉGORIE "VIDEO"
-  else if (category === 'video') {
+  } else if (category === 'video') {
     const randomQuery = 'clip | short film | animation | live performance';
-    const videoCategoryIds = '1,10,24'; // 1: Film & Animation, 10: Musique (pour les clips), 24: Divertissement
+    const videoCategoryIds = '1,10,24';
     baseParams.set('q', randomQuery);
-    baseParams.set('videoCategoryId', videoCategoryIds.split(',')[Math.floor(Math.random() * 3)]); // Choisit une catégorie au hasard
+    baseParams.set('videoCategoryId', videoCategoryIds.split(',')[Math.floor(Math.random() * 3)]);
     baseParams.set('order', 'viewCount');
-  }
-  else { // Catégorie 'all'
+  } else { // Catégorie 'all'
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let randomQuery = '';
     for (let i = 0; i < 2; i++) {
@@ -77,7 +74,6 @@ app.get('/random-video', async (req, res) => {
     let video;
     let cache;
 
-    // On choisit le bon cache en fonction de la catégorie
     if (category === 'music') cache = musicVideoCache;
     else if (category === 'video') cache = videoVideoCache;
     else cache = allVideoCache;
@@ -89,7 +85,6 @@ app.get('/random-video', async (req, res) => {
       else allVideoCache.push(...newBatch);
     }
     
-    // On met à jour la référence au cas où le cache était vide
     if (category === 'music') cache = musicVideoCache;
     else if (category === 'video') cache = videoVideoCache;
     else cache = allVideoCache;
@@ -99,7 +94,16 @@ app.get('/random-video', async (req, res) => {
     if (!video) {
       return res.status(404).json({ error: 'Aucune vidéo trouvée, essayez à nouveau.' });
     }
-    res.json({ id: video.id.videoId, title: video.snippet.title });
+    
+    // On envoie maintenant un objet complet avec la date
+    const videoData = {
+      id: video.id.videoId,
+      title: video.snippet.title,
+      publishedAt: video.snippet.publishedAt // Ajout de la date
+    };
+
+    res.json(videoData);
+
   } catch (error) {
     console.error('Erreur dans /random-video:', error.message);
     res.status(500).json({ error: 'Erreur interne du serveur' });

@@ -1,4 +1,4 @@
-// public/script.js (Correction finale et robuste du bouton)
+// public/script.js
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
@@ -7,35 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeMessage = document.getElementById('welcomeMessage');
   const videoInfoBox = document.getElementById('videoInfo');
   const videoTitleElem = document.getElementById('videoTitle');
+  const videoDateElem = document.getElementById('videoDate');
   const historyContainer = document.getElementById('historyContainer');
   const historyPlaceholder = document.getElementById('historyPlaceholder');
   const categoryLinks = document.querySelectorAll('.category-link');
   
   let currentCategory = 'all'; 
 
-  // Fonction pour mettre à jour le texte du bouton principal
   function updateButtonText() {
     const buttonTextSpan = document.querySelector('#btn > span');
     if (!buttonTextSpan) return;
-    
-    // Choisir la bonne clé de traduction
-    buttonTextSpan.dataset.key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-    
-    // Déclencher la retraduction
+    const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+    buttonTextSpan.dataset.key = key;
     const currentLang = localStorage.getItem('lang') || 'fr';
     document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
   }
 
-  // Fonction pour gérer le changement de catégorie
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     console.log(`Catégorie définie sur : ${currentCategory}`);
-
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
-    
-    updateButtonText(); // Met à jour le texte du bouton
-
+    updateButtonText();
     if (!fromHistory) {
       const newUrl = (category === 'music') ? '/music' : (category === 'video') ? '/video' : '/';
       const newTitle = `YTB Random - ${category}`;
@@ -43,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Gère les clics sur les liens de catégorie
   categoryLinks.forEach(link => {
     link.addEventListener('click', (event) => {
       event.preventDefault(); 
@@ -52,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Gère l'état initial au chargement de la page
   const initialPath = window.location.pathname;
   if (initialPath === '/music') {
     setCategory('music', true);
@@ -62,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setCategory('all', true);
   }
 
-  // Gère le clic sur "NOUVELLE VIDÉO / MUSIQUE"
   btn.addEventListener('click', async () => {
     console.log(`🔘 Bouton cliqué, j’appelle /random-video pour la catégorie : ${currentCategory}`);
     try {
@@ -70,30 +60,42 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.innerHTML = `<div class="spinner"></div>`;
       const resp = await fetch(`/random-video?category=${currentCategory}`);
       if (!resp.ok) throw new Error(`Erreur serveur ${resp.status}`);
-      const { id, title } = await resp.json();
+      
+      const { id, title, publishedAt } = await resp.json();
+      
       window.currentVideoId = id;
       if (welcomeMessage) welcomeMessage.style.display = 'none';
       updateHistory({ id, title });
       player.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      
       if (videoTitleElem) {
         videoTitleElem.textContent = title;
+        if (videoDateElem && publishedAt) {
+          const videoDate = new Date(publishedAt);
+          const today = new Date();
+          let yearsAgo = today.getFullYear() - videoDate.getFullYear();
+          const m = today.getMonth() - videoDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < videoDate.getDate())) {
+            yearsAgo--;
+          }
+          const formattedDate = videoDate.toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          const yearText = (yearsAgo <= 1) ? "an" : "ans";
+          videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
+        }
         videoInfoBox.classList.remove('hidden');
       }
     } catch (e) {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
-      // ✅ --- CORRECTION DÉFINITIVE --- ✅
       btn.disabled = false;
-      
-      // On choisit le texte et la clé par défaut en fonction de la catégorie
       const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
       const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-
-      // On restaure directement le bouton avec son contenu et son texte. Il ne peut plus être vide.
       btn.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
-      
-      // On applique ensuite la bonne langue par-dessus le texte par défaut
       const currentLang = localStorage.getItem('lang') || 'fr';
       document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
     }
