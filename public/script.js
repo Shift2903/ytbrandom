@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
+  // --- SÉLECTION DES ÉLÉMENTS DU DOM ---
   const btnDesktop = document.getElementById('btn-desktop');
   const btnMobile = document.getElementById('btn-mobile');
   const allBtns = [btnDesktop, btnMobile];
@@ -13,8 +14,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const historyContainer = document.getElementById('historyContainer');
   const historyPlaceholder = document.getElementById('historyPlaceholder');
   const categoryLinks = document.querySelectorAll('.category-link');
-  
-  let currentCategory = 'all'; 
+  const themeSwitcher = document.getElementById('theme-switcher');
+  const docHtml = document.documentElement;
+
+  let currentCategory = 'all';
+
+  // --- LOGIQUE DU SÉLECTEUR DE THÈME ---
+  themeSwitcher.addEventListener('click', () => {
+    docHtml.classList.toggle('dark');
+    // Sauvegarde le choix dans le localStorage
+    if (docHtml.classList.contains('dark')) {
+      localStorage.setItem('theme', 'dark');
+    } else {
+      localStorage.setItem('theme', 'light');
+    }
+  });
+
+  // Applique le thème sauvegardé au chargement de la page
+  if (localStorage.getItem('theme') === 'dark') {
+    docHtml.classList.add('dark');
+  }
+
+  // --- LOGIQUE DE GESTION DES CATÉGORIES ET DE L'APPLICATION ---
 
   function updateButtonText() {
     const buttonTextSpanDesktop = document.querySelector('#btn-desktop > span');
@@ -102,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('🔥 Erreur côté client :', e);
         alert('Erreur: Impossible de charger une vidéo.');
       } finally {
-        // Restauration robuste des deux boutons
         if (btnDesktop) {
           btnDesktop.disabled = false;
           const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
