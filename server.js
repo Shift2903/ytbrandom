@@ -9,7 +9,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.YOUTUBE_API_KEY;
 
-// Nécessaire pour que Express trouve les fichiers quand on utilise les modules ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -42,7 +41,7 @@ async function fetchNewVideoBatch(category) {
     baseParams.set('regionCode', 'FR');
   }
   
-  // ✅ CORRECTION DÉFINITIVE DU BUG : Utilisation des backticks ``
+  // ✅ CORRECTION DÉFINITIVE DU BUG : Utilisation des backticks `` au lieu des apostrophes ''
   const YOUTUBE_API_URL = `youtube.com/watch?v={baseParams.toString()}`;
   
   console.log("Appel API:", YOUTUBE_API_URL);
@@ -57,7 +56,6 @@ async function fetchNewVideoBatch(category) {
 
 app.get('/random-video', async (req, res) => {
   const category = req.query.category || 'all';
-  console.log(`Demande de vidéo pour la catégorie : ${category}`);
   try {
     let video;
     if (category === 'music') {
@@ -81,8 +79,6 @@ app.get('/random-video', async (req, res) => {
   }
 });
 
-// ✅ AJOUT : Gère les routes comme /music et renvoie toujours votre page principale
-// Doit être placé APRÈS vos autres routes API
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
