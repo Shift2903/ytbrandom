@@ -12,13 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeSwitcher = document.getElementById('theme-switcher');
   const docHtml = document.documentElement;
   const langFlags = document.querySelectorAll('.lang-flag');
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toast-message');
   const twitterBtn = document.getElementById('twitter-share-btn');
   const facebookBtn = document.getElementById('facebook-share-btn');
   const copyLinkBtn = document.getElementById('copy-link-btn');
-
+  
   let currentCategory = 'all';
   let translations = {};
-  
+  let toastTimeout;
+
   themeSwitcher.addEventListener('click', () => {
     docHtml.classList.toggle('dark');
     localStorage.setItem('theme', docHtml.classList.contains('dark') ? 'dark' : 'light');
@@ -26,6 +29,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (localStorage.getItem('theme') === 'dark') {
     docHtml.classList.add('dark');
+  }
+
+  function showToast(message, isSuccess = true) {
+    clearTimeout(toastTimeout);
+    toastMessage.textContent = message;
+    toast.className = toast.className.replace(/bg-\w+-\d+/, isSuccess ? 'bg-green-500' : 'bg-red-500');
+    toast.classList.remove('opacity-0');
+    toast.classList.add('opacity-100');
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove('opacity-100');
+      toast.classList.add('opacity-0');
+    }, 3000);
   }
 
   function applyTranslations() {
@@ -74,8 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   async function initializePage() {
-    const savedLang = localStorage.getItem('lang') || 'fr';
-    await setLanguage(savedLang);
+    let initialLang = localStorage.getItem('lang');
+    if (!initialLang) {
+      const browserLang = navigator.language.split('-')[0];
+      const supportedLangs = ['fr', 'en', 'es', 'de'];
+      initialLang = supportedLangs.includes(browserLang) ? browserLang : 'fr';
+    }
+    await setLanguage(initialLang);
+    
     const initialPath = window.location.pathname;
     if (initialPath.includes('/music')) setCategory('music', true);
     else if (initialPath.includes('/video')) setCategory('video', true);
@@ -98,10 +119,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const videoUrl = `https://www.youtube.com/watch?v=${window.currentVideoId}`;
       window.open(directLinkUrl, '_blank');
       navigator.clipboard.writeText(videoUrl).then(() => {
-        alert("Lien YouTube copié 📋");
+        showToast("Lien YouTube copié !");
       });
     });
   }
+  
+  historyContainer.addEventListener('click', (event) => {
+    const copyBtn = event.target.closest('.copy-history-btn');
+    if (copyBtn) {
+      event.preventDefault();
+      const videoId = copyBtn.dataset.id;
+      const directLinkUrl = 'https://doorwaydistinct.com/jcw2vz016?key=2ff14b592c85850b82fe3d09160c215e';
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      window.open(directLinkUrl, '_blank');
+      navigator.clipboard.writeText(videoUrl).then(() => {
+        showToast("Lien YouTube copié !");
+      });
+    }
+  });
 
   btn.addEventListener('click', async () => {
     try {
@@ -131,12 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
         videoDateElem.textContent = `Publié le ${formattedDate} (il y a ${yearsAgo} ${yearText})`;
       }
       
-      videoInfoBox.classList.remove('fade-in', 'hidden');
+      videoInfoBox.classList.remove('hidden', 'fade-in');
       void videoInfoBox.offsetWidth;
       videoInfoBox.classList.add('fade-in');
+
     } catch (e) {
       console.error('🔥 Erreur côté client :', e);
-      alert('Erreur: Impossible de charger une vidéo.');
+      showToast("Erreur: Impossible de charger une vidéo.", false);
     } finally {
       btn.disabled = false;
       const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
@@ -148,13 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateHistory(video) {
     if (historyPlaceholder) historyPlaceholder.style.display = 'none';
-    const historyItem = document.createElement('a');
-    historyItem.href = `https://www.youtube.com/watch?v=${video.id}`;
-    historyItem.target = '_blank';
-    historyItem.rel = 'noopener noreferrer';
+    const historyItem = document.createElement('div');
     historyItem.className = 'history-item p-2 rounded-md flex items-center gap-3 fade-in';
-    historyItem.innerHTML = `<img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" alt=""><span>${video.title}</span>`;
+    historyItem.innerHTML = `
+      <a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noopener noreferrer">
+        <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" alt="">
+      </a>
+      <span class="flex-grow">${video.title}</span>
+      <button class="copy-history-btn" data-id="${video.id}" data-key="copyButton">Copier</button>
+    `;
     historyContainer.prepend(historyItem);
+    applyTranslations();
   }
   
   initializePage();
