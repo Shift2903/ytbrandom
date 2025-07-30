@@ -1,4 +1,4 @@
-// public/script.js
+// public/script.js (Correction finale du bouton)
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
@@ -13,26 +13,30 @@ document.addEventListener('DOMContentLoaded', () => {
   
   let currentCategory = 'all'; 
 
+  // Fonction pour mettre à jour le texte du bouton principal
+  function updateButtonText() {
+    const buttonTextSpan = document.querySelector('#btn > span');
+    if (!buttonTextSpan) return;
+    
+    // 1. Choisir la bonne clé de traduction
+    const key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+    buttonTextSpan.dataset.key = key;
+    
+    // 2. Déclencher la retraduction
+    const currentLang = localStorage.getItem('lang') || 'fr';
+    document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+  }
+
   // Fonction pour gérer le changement de catégorie
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     console.log(`Catégorie définie sur : ${currentCategory}`);
 
-    // Met à jour le style visuel des boutons de catégorie
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
+    
+    updateButtonText(); // Met à jour le texte du bouton
 
-    // ✅ Met à jour le data-key du bouton principal
-    const buttonTextSpan = document.querySelector('#btn > span');
-    if (buttonTextSpan) {
-      buttonTextSpan.dataset.key = (category === 'music') ? 'buttonMusic' : 'button';
-    }
-
-    // Déclenche la retraduction pour appliquer le nouveau texte
-    const currentLang = localStorage.getItem('lang') || 'fr';
-    document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
-
-    // Change l'URL dans le navigateur sans recharger la page
     if (!fromHistory) {
       const newUrl = (category === 'music') ? '/music' : (category === 'video') ? '/video' : '/';
       const newTitle = `YTB Random - ${category}`;
@@ -80,15 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
+      // ✅ CORRECTION FINALE : Restauration du bouton
       btn.disabled = false;
       const buttonTextSpan = document.createElement('span');
-      // ✅ Restaure le bouton avec le bon data-key en fonction de la catégorie
-      buttonTextSpan.dataset.key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
       btn.innerHTML = '';
       btn.appendChild(buttonTextSpan);
-      
-      const currentLang = localStorage.getItem('lang') || 'fr';
-      document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+      updateButtonText(); // Appelle la nouvelle fonction pour mettre à jour le texte
     }
   });
 
