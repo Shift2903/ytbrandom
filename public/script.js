@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✨ script.js chargé');
 
-  // On cible les deux boutons (PC et mobile) ainsi que les autres éléments
   const btnDesktop = document.getElementById('btn-desktop');
   const btnMobile = document.getElementById('btn-mobile');
   const allBtns = [btnDesktop, btnMobile];
@@ -60,14 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setCategory('all', true);
   }
 
-  // On attache l'événement de clic aux deux boutons
   allBtns.forEach(btn => {
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
       console.log(`🔘 Bouton cliqué (${btn.id}), catégorie : ${currentCategory}`);
       try {
-        // Met le spinner sur les deux boutons
         allBtns.forEach(b => {
           if (b) {
             b.disabled = true;
@@ -105,19 +102,18 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('🔥 Erreur côté client :', e);
         alert('Erreur: Impossible de charger une vidéo.');
       } finally {
-        // Restaure les deux boutons
-        allBtns.forEach(b => {
-          if (b) {
-            b.disabled = false;
-            if (b.id === 'btn-desktop') {
-              const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
-              const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
-              b.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
-            } else { // C'est le bouton mobile
-              b.innerHTML = `<span>▶</span>`;
-            }
-          }
-        });
+        // Restauration robuste des deux boutons
+        if (btnDesktop) {
+          btnDesktop.disabled = false;
+          const defaultText = (currentCategory === 'music') ? 'NOUVELLE MUSIQUE' : 'NOUVELLE VIDÉO';
+          const dataKey = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+          btnDesktop.innerHTML = `<span data-key="${dataKey}">${defaultText}</span>`;
+        }
+        if (btnMobile) {
+          btnMobile.disabled = false;
+          btnMobile.innerHTML = `<span>▶</span>`;
+        }
+        
         const currentLang = localStorage.getItem('lang') || 'fr';
         document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
       }
