@@ -1,4 +1,4 @@
-// server.js (Version doublement corrigée)
+// server.js (Version Finale avec Hasard par Date)
 import express from 'express';
 import fetch from 'node-fetch';
 import 'dotenv/config';
@@ -17,8 +17,16 @@ let allVideoCache = [];
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+function getRandomDate() {
+  const start = new Date(2008, 0, 1).getTime();
+  const end = new Date().getTime();
+  const randomTime = start + Math.random() * (end - start);
+  return new Date(randomTime).toISOString();
+}
+
 async function fetchNewVideoBatch(category) {
   console.log(`Cache pour '${category}' vide. Appel à l'API YouTube...`);
+
   const baseParams = new URLSearchParams({
     part: 'snippet',
     maxResults: 50,
@@ -30,29 +38,34 @@ async function fetchNewVideoBatch(category) {
     baseParams.set('q', '"Official Audio" | "Official Music Video" | "Topic"');
     baseParams.set('videoCategoryId', '10');
     baseParams.set('order', 'relevance');
-  } else {
+  } else { // Catégorie 'all'
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let randomQuery = '';
     for (let i = 0; i < 2; i++) {
       randomQuery += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     baseParams.set('q', randomQuery);
-    // ✅ CORRECTION N°1 : Remplacement de 'base' par 'baseParams'
-    baseParams.set('regionCode', 'FR');
+    baseParams.set('publishedBefore', getRandomDate());
+    
+    // ✅ CORRECTION : On change l'ordre pour un tri purement chronologique
+    baseParams.set('order', 'date'); 
   }
   
-  // ✅ CORRECTION N°2 : Utilisation des backticks `` au lieu des apostrophes ''
   const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/search?${baseParams.toString()}`;
   
   console.log("Appel API:", YOUTUBE_API_URL);
+
   const response = await fetch(YOUTUBE_API_URL);
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("Erreur API:", errorBody);
     throw new Error(`Erreur de l'API YouTube (${response.status})`);
   }
   const data = await response.json();
   return data.items || [];
 }
 
+// ... Le reste du fichier est identique ...
 app.get('/random-video', async (req, res) => {
   const category = req.query.category || 'all';
   try {
