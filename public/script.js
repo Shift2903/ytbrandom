@@ -13,18 +13,34 @@ document.addEventListener('DOMContentLoaded', () => {
   
   let currentCategory = 'all'; 
 
+  // Fonction pour gérer le changement de catégorie
   function setCategory(category, fromHistory = false) {
     currentCategory = category;
     console.log(`Catégorie définie sur : ${currentCategory}`);
+
+    // Met à jour le style visuel des boutons de catégorie
     categoryLinks.forEach(l => l.classList.remove('active'));
     document.querySelector(`.category-link[data-category="${category}"]`).classList.add('active');
+
+    // ✅ Met à jour le data-key du bouton principal
+    const buttonTextSpan = document.querySelector('#btn > span');
+    if (buttonTextSpan) {
+      buttonTextSpan.dataset.key = (category === 'music') ? 'buttonMusic' : 'button';
+    }
+
+    // Déclenche la retraduction pour appliquer le nouveau texte
+    const currentLang = localStorage.getItem('lang') || 'fr';
+    document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
+
+    // Change l'URL dans le navigateur sans recharger la page
     if (!fromHistory) {
-      const newUrl = (category === 'music') ? '/music' : '/';
-      const newTitle = (category === 'music') ? 'YTB Random - Musique' : 'YTB Random - Tout';
+      const newUrl = (category === 'music') ? '/music' : (category === 'video') ? '/video' : '/';
+      const newTitle = `YTB Random - ${category}`;
       history.pushState({ category: category }, newTitle, newUrl);
     }
   }
 
+  // Gère les clics sur les liens de catégorie
   categoryLinks.forEach(link => {
     link.addEventListener('click', (event) => {
       event.preventDefault(); 
@@ -33,13 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Gère l'état initial au chargement de la page
   const initialPath = window.location.pathname;
   if (initialPath === '/music') {
     setCategory('music', true);
+  } else if (initialPath === '/video') {
+    setCategory('video', true);
   } else {
     setCategory('all', true);
   }
 
+  // Gère le clic sur "NOUVELLE VIDÉO / MUSIQUE"
   btn.addEventListener('click', async () => {
     console.log(`🔘 Bouton cliqué, j’appelle /random-video pour la catégorie : ${currentCategory}`);
     try {
@@ -60,15 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('🔥 Erreur côté client :', e);
       alert('Erreur: Impossible de charger une vidéo.');
     } finally {
-      // ✅ --- DÉBUT DE LA CORRECTION --- ✅
       btn.disabled = false;
-      // On restaure directement le bouton avec son contenu HTML par défaut
-      btn.innerHTML = `<span data-key="button">NOUVELLE VIDÉO</span>`;
+      const buttonTextSpan = document.createElement('span');
+      // ✅ Restaure le bouton avec le bon data-key en fonction de la catégorie
+      buttonTextSpan.dataset.key = (currentCategory === 'music') ? 'buttonMusic' : 'button';
+      btn.innerHTML = '';
+      btn.appendChild(buttonTextSpan);
       
-      // On s'assure que le texte est dans la bonne langue
       const currentLang = localStorage.getItem('lang') || 'fr';
       document.querySelector(`.lang-flag[data-lang="${currentLang}"]`)?.click();
-      // ✅ --- FIN DE LA CORRECTION --- ✅
     }
   });
 
