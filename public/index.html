@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="fr"><head>
+<html lang="fr">
+<head>
   <meta charset="UTF-8">
   <title data-key="metaTitle">YTB Random - Regarde une vidéo YouTube aléatoire</title>
   <meta name="description" content="Clique et découvre une vidéo YouTube totalement aléatoire." data-key="metaDescription">
@@ -11,12 +12,15 @@
   <link rel="icon" type="image/png" href="favicon.png">
 
   <style>
+    /* --- Styles de Base --- */
     body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
     .spinner { animation: spin 1s linear infinite; display: inline-block; width: 1.25rem; height: 1.25rem; border: 3px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; }
     .dark .spinner { border-color: rgba(255,255,255,0.2); border-top-color: #fff; }
     #videoContainer { position: relative; width: 100%; padding-top: 56.25%; background-color: #e2e8f0; }
     .dark #videoContainer { background-color: #000; }
     #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+    /* --- Thème Clair (par défaut) --- */
     body { background-color: #f8fafc; color: #0f172a; }
     .theme-bg { background-color: #ffffff; }
     .theme-text-secondary { color: #64748b; }
@@ -27,6 +31,8 @@
     .history-item:hover { background-color: #f1f5f9; }
     #theme-moon { display: block; }
     #theme-sun { display: none; }
+
+    /* --- Thème Sombre (activé avec la classe .dark) --- */
     .dark body { background-color: #020617; color: #e2e8f0; }
     .dark .theme-bg { background-color: #0f172a; }
     .dark .theme-text-secondary { color: #94a3b8; }
@@ -37,6 +43,8 @@
     .dark .history-item:hover { background-color: #1e293b; }
     .dark #theme-moon { display: none; }
     .dark #theme-sun { display: block; }
+
+    /* --- Styles Communs Minimalistes --- */
     .btn-primary { transition: background-color 0.15s ease-out; }
     .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
     .category-link { border-bottom: 2px solid transparent; transition: all 0.2s; color: #64748b; }
@@ -46,11 +54,31 @@
     .history-item span { flex-grow: 1; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
     .lang-flag { cursor: pointer; transition: transform 0.2s; filter: grayscale(80%); opacity: 0.7; }
     .lang-flag:hover, .lang-flag.active { transform: scale(1.2); filter: grayscale(0%); opacity: 1; }
+    
+    /* Animation "Fade-in" */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    /* Styles pour les boutons de partage */
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem; /* 40px */
+      height: 2.5rem; /* 40px */
+      border-radius: 9999px; /* Cercle */
+    }
   </style>
 </head>
 <body>
 
   <div class="flex flex-col lg:flex-row h-screen">
+    
     <aside class="w-full lg:w-64 p-6 hidden lg:flex flex-col items-center justify-center theme-bg theme-border border-r">
       <h2 class="text-sm font-bold mb-4 theme-text-secondary uppercase tracking-wider" data-key="adTitle">Publicité</h2>
       <div class="w-full h-full flex items-center justify-center">
@@ -78,13 +106,20 @@
         </div>
       </header>
       <div id="videoContainer" class="rounded-lg overflow-hidden w-full flex-grow shadow-lg"></div>
-      <div id="videoInfo" class="mt-4 p-2 hidden">
-        <div class="flex justify-between items-center">
-            <div>
-                <h3 id="videoTitle" class="text-lg font-bold">Titre de la vidéo</h3>
-                <p id="videoDate" class="text-sm theme-text-secondary mt-1"></p>
-            </div>
-            <button id="adLinkBtn" data-key="shareButton" class="px-4 py-2 text-sm font-bold rounded-lg transition-colors bg-slate-900 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">Partager</button>
+      <div id="videoInfo" class="mt-4 p-4 theme-bg rounded-lg hidden">
+        <h3 id="videoTitle" class="text-lg font-bold">Titre de la vidéo</h3>
+        <p id="videoDate" class="text-sm theme-text-secondary mt-1"></p>
+        <div class="mt-4 border-t theme-border pt-4 flex items-center gap-3">
+            <span class="text-sm font-bold theme-text-secondary" data-key="shareTitle">Partager:</span>
+            <a id="twitter-share-btn" href="#" target="_blank" class="share-btn theme-text-secondary hover:bg-gray-200 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+            </a>
+            <a id="facebook-share-btn" href="#" target="_blank" class="share-btn theme-text-secondary hover:bg-gray-200 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04zM16.5 12.06h-2.25v7.88h-3V12.06H9.5V9.81h1.75V8.19c0-1.72 1.05-2.67 2.6-2.67h1.5v2.25h-.9c-.85 0-1.02.4-1.02.98v1.11h1.9l-.25 2.25z"></path></svg>
+            </a>
+            <button id="copy-link-btn" class="share-btn theme-text-secondary hover:bg-gray-200 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342a2.25 2.25 0 010-3.182l5.656-5.656a2.25 2.25 0 113.182 3.182l-5.656 5.656a2.25 2.25 0 01-3.182 0zM10.828 10.828a2.25 2.25 0 000 3.182l5.657 5.657a2.25 2.25 0 103.182-3.182l-5.657-5.657a2.25 2.25 0 00-3.182 0z"></path></svg>
+            </button>
         </div>
       </div>
     </main>
@@ -99,15 +134,10 @@
           <p id="historyPlaceholder" class="text-sm theme-text-secondary" data-key="historyPlaceholder">Votre historique apparaîtra ici...</p>
         </div>
       </div>
-      <div class="lg:hidden mt-4 flex justify-center">
-        <script type="text/javascript">
-          atOptions = { 'key' : 'fba8efc7e6bac2a226111403c8c07721', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
-        </script>
-        <script type="text/javascript" src="//doorwaydistinct.com/fba8efc7e6bac2a226111403c8c07721/invoke.js"></script>
-      </div>
     </aside>
   </div>
   
   <script src="/script.js"></script>
+  <script src="/lang.js"></script>
 </body>
 </html>
