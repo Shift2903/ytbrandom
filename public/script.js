@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('✨ script.js final (avec traduction) chargé');
+  console.log('✨ script.js final (avec copie lien) chargé');
 
   const btn = document.getElementById('btn');
   const adLinkBtn = document.getElementById('adLinkBtn');
@@ -92,6 +92,16 @@ document.addEventListener('DOMContentLoaded', () => {
     adLinkBtn.addEventListener('click', () => {
       const directLinkUrl = 'https://doorwaydistinct.com/jcw2vz016?key=2ff14b592c85850b82fe3d09160c215e';
       window.open(directLinkUrl, '_blank');
+
+      const videoId = window.currentVideoId;
+      if (!videoId) return;
+
+      const shareUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Lien YouTube copié 📋 : " + shareUrl);
+      }).catch(err => {
+        console.error("Erreur lors de la copie du lien :", err);
+      });
     });
   }
 
