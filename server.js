@@ -1,4 +1,4 @@
-// server.js (Version Finale avec Hasard par Date)
+// server.js (Version avec catégorie "Vidéo" en plus)
 import express from 'express';
 import fetch from 'node-fetch';
 import 'dotenv/config';
@@ -12,7 +12,9 @@ const API_KEY = process.env.YOUTUBE_API_KEY;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// On ajoute un cache pour la nouvelle catégorie
 let musicVideoCache = [];
+let videoVideoCache = [];
 let allVideoCache = [];
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -26,7 +28,6 @@ function getRandomDate() {
 
 async function fetchNewVideoBatch(category) {
   console.log(`Cache pour '${category}' vide. Appel à l'API YouTube...`);
-
   const baseParams = new URLSearchParams({
     part: 'snippet',
     maxResults: 50,
@@ -35,10 +36,19 @@ async function fetchNewVideoBatch(category) {
   });
 
   if (category === 'music') {
-    baseParams.set('q', '"Official Audio" | "Official Music Video" | "Topic"');
-    baseParams.set('videoCategoryId', '10');
+    baseParams.set('q', '"Official Audio" | "Topic"');
+    baseParams.set('videoCategoryId', '10'); // Catégorie Musique
     baseParams.set('order', 'relevance');
-  } else { // Catégorie 'all'
+  } 
+  // ✅ NOUVELLE LOGIQUE POUR LA CATÉGORIE "VIDEO"
+  else if (category === 'video') {
+    const randomQuery = 'clip | short film | animation | live performance';
+    const videoCategoryIds = '1,10,24'; // 1: Film & Animation, 10: Musique (pour les clips), 24: Divertissement
+    baseParams.set('q', randomQuery);
+    baseParams.set('videoCategoryId', videoCategoryIds.split(',')[Math.floor(Math.random() * 3)]); // Choisit une catégorie au hasard
+    baseParams.set('order', 'viewCount');
+  }
+  else { // Catégorie 'all'
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let randomQuery = '';
     for (let i = 0; i < 2; i++) {
@@ -46,15 +56,11 @@ async function fetchNewVideoBatch(category) {
     }
     baseParams.set('q', randomQuery);
     baseParams.set('publishedBefore', getRandomDate());
-    
-    // ✅ CORRECTION : On change l'ordre pour un tri purement chronologique
-    baseParams.set('order', 'date'); 
+    baseParams.set('order', 'relevance'); 
   }
   
   const YOUTUBE_API_URL = `https://www.googleapis.com/youtube/v3/search?${baseParams.toString()}`;
-  
   console.log("Appel API:", YOUTUBE_API_URL);
-
   const response = await fetch(YOUTUBE_API_URL);
   if (!response.ok) {
     const errorBody = await response.text();
@@ -65,22 +71,31 @@ async function fetchNewVideoBatch(category) {
   return data.items || [];
 }
 
-// ... Le reste du fichier est identique ...
 app.get('/random-video', async (req, res) => {
   const category = req.query.category || 'all';
   try {
     let video;
-    if (category === 'music') {
-      if (musicVideoCache.length === 0) {
-        musicVideoCache = await fetchNewVideoBatch('music');
-      }
-      video = musicVideoCache.pop();
-    } else {
-      if (allVideoCache.length === 0) {
-        allVideoCache = await fetchNewVideoBatch('all');
-      }
-      video = allVideoCache.pop();
+    let cache;
+
+    // On choisit le bon cache en fonction de la catégorie
+    if (category === 'music') cache = musicVideoCache;
+    else if (category === 'video') cache = videoVideoCache;
+    else cache = allVideoCache;
+
+    if (cache.length === 0) {
+      const newBatch = await fetchNewVideoBatch(category);
+      if (category === 'music') musicVideoCache.push(...newBatch);
+      else if (category === 'video') videoVideoCache.push(...newBatch);
+      else allVideoCache.push(...newBatch);
     }
+    
+    // On met à jour la référence au cas où le cache était vide
+    if (category === 'music') cache = musicVideoCache;
+    else if (category === 'video') cache = videoVideoCache;
+    else cache = allVideoCache;
+
+    video = cache.pop();
+
     if (!video) {
       return res.status(404).json({ error: 'Aucune vidéo trouvée, essayez à nouveau.' });
     }
